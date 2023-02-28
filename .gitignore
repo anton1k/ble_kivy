@@ -1,0 +1,9 @@
+.vscode
+able
+__pycache__
+.buildozer
+buildozer/*
+recipes
+get-pip.py
+bin
+install-kivy-buildozer-dependencies.sh
