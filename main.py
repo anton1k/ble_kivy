@@ -1,11 +1,16 @@
+import os
+import time
+
 from kivy.clock import Clock, mainthread
 from kivy.config import Config
 from kivy.lang import Builder
 from kivy.properties import BooleanProperty, StringProperty
 from kivymd.app import MDApp
+from kivymd.toast import toast
+from kivymd.uix.button import MDTextButton
+from kivymd.uix.filemanager import MDFileManager
 from kivymd.uix.list import OneLineListItem, TwoLineListItem
 from kivymd.uix.screenmanager import MDScreenManager
-from kivymd.uix.button import MDTextButton
 
 from able import GATT_SUCCESS, BluetoothDispatcher
 
@@ -40,7 +45,7 @@ MDScreen:
         icon_color: '#FFFFFF'
         theme_icon_color: "Custom"
         on_press: app.start_scan_button()
-        pos_hint: {'top': .11, 'right': .99}
+        pos_hint: {'top': .11, 'right': .97}
 '''
 
 KV2 = '''
@@ -61,19 +66,18 @@ MDScreen:
                 
         MDList:
             id: result
-
-    # MDLabel:
-    #     text: app.notification_value
-    #     halign: "center"
-    #     font_size: "40sp"
     
     MDFloatingActionButton:
         icon: "arrow-left"
         icon_color: '#FFFFFF'
         theme_icon_color: "Custom"
         on_press: app.backpase_button()
-        pos_hint: {'top': .11, 'right': .98}
+        pos_hint: {'top': .11, 'right': .97}
 
+    MDFloatingActionButton:
+        icon: "content-save"
+        pos_hint: {'top': .11, 'x': .03}
+        on_release: app.file_manager_open()
 '''
 
 
@@ -91,9 +95,10 @@ class MainApp(MDApp):
     queue_timeout_enabled = BooleanProperty(True)
     queue_timeout = StringProperty('1000')
     device_name = StringProperty('')
-    notification_value = StringProperty('')
     devices_address_list = []
-    transmitted_testimony = []
+    value_list = []
+
+    # value_list = ['1.906m\r\n\x00', '1.861m\r\n\x00',]
     buttom_list = []
     count = 0
     froze = 1
@@ -132,6 +137,13 @@ class MainApp(MDApp):
                 on_press=self.clean_list_bottom
 
             )
+        self.manager_open = False
+        self.file_manager = MDFileManager(
+            exit_manager=self.exit_manager, 
+            select_path=self.select_path,
+            selector='folder'
+        )
+
         self.clean_buttom.color = 'white'
 
         Clock.schedule_once(self.start_scan, 1)
@@ -233,25 +245,34 @@ class MainApp(MDApp):
         self.enable_notifications()
 
     def enable_notifications(self, enable=True):
-        if enable:
-            self.notification_value = '0'
         characteristic = self.services.search(self.uids['string'])
         if characteristic:
             self.ble.enable_notifications(characteristic, enable)
-        else:
-            self.notification_value = 'error'
 
     def on_characteristic_changed(self, ble, characteristic):
         uuid = characteristic.getUuid().toString()
         if self.uids['string'] in uuid:
             value = characteristic.getStringValue(0)
-            # self.notification_value += value
-            self.transmitted_testimony.append(value)
+            self.value_list.append(value)
+            print(self.value_list)
             self.list_result(value)
 
     def set_queue_settings(self):
         self.ble.set_queue_timeout(None if not self.queue_timeout_enabled
                                    else int(self.queue_timeout) * .001)
+        
+    def file_manager_open(self):
+        self.file_manager.show(os.path.expanduser("~"))  # output manager to the screen
+        self.manager_open = True
+        # self.file_manager.show_disks()
+
+    def select_path(self, path: str):
+        self.exit_manager()
+        toast(path)
+
+    def exit_manager(self, *args):
+        self.manager_open = False
+        self.file_manager.close()
 
 
 MainApp().run()
