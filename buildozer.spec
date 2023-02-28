@@ -38,9 +38,6 @@ fullscreen = 1
 android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,BLUETOOTH,BLUETOOTH_ADMIN,BLUETOOTH_SCAN,BLUETOOTH_CONNECT,BLUETOOTH_ADVERTISE,ACCESS_FINE_LOCATION
 
 p4a.local_recipes = ./recipes/able/recipes/able_recipe/
-# p4a.local_recipes = ./bleak/bleak/backends/p4android/recipes/bleak/
-
-# android.add_src = ./bleak/bleak/backends/p4android/java/com/github/hbldh/bleak/*
 
 # (int) Target Android API, should be as high as possible.
 android.api = 31

@@ -2,7 +2,7 @@
 able
 __pycache__
 .buildozer
-buildozer/*
+buildozer
 recipes
 get-pip.py
 bin
