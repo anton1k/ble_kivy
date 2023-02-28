@@ -57,16 +57,80 @@ MDScreen:
         pos_hint: {'top': 1}
         size_hint_y: .10
 
-    MDScrollView:
+    MDFloatLayout:
         orientation: "vertical"
-        padding: "0dp"
-        adaptive_height: True
-        pos_hint: {"top": .9}
-        id: list
-                
-        MDList:
-            id: result
-    
+
+        MDBoxLayout:
+            orientation: "vertical"
+            size_hint_y: .10
+            pos_hint: {'top': .90}
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                padding: [20, 0]
+                MDLabel:
+                    text: "Метр/миллиметр:"
+                    pos_hint: {"center_y": .5}
+                MDBoxLayout:
+                    MDSwitch:
+                        pos_hint: {"center_y": .5}
+                        on_active: app.on_checkbox_active(*args)
+                MDIconButton:
+                    icon: ""
+
+        MDBoxLayout:
+            orientation: "vertical"
+            size_hint_y: .30
+            pos_hint: {'top': .80}
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                padding: [20, 0]
+                md_bg_color: "#F0F0F0"
+                MDLabel:
+                    text: "H:"
+                MDLabel:
+                    text: app.H + app.metric
+                MDIconButton:
+                    icon: "delete-circle"
+                    theme_icon_color: "Custom"
+                    icon_color: app.theme_cls.primary_color
+                    on_press: app.clean_h()
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                padding: [20, 0]
+                MDLabel:
+                    text: "L:"
+                MDLabel:
+                    text: app.L + app.metric
+                MDIconButton:
+                    icon: "delete-circle"
+                    theme_icon_color: "Custom"
+                    icon_color: app.theme_cls.primary_color
+                    on_press: app.clean_l()
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                padding: [20, 0]
+                md_bg_color: "#F0F0F0"
+                MDLabel:
+                    text: "Дата и время:"
+                MDLabel:
+                    text: app.result_time
+                MDIconButton:
+                    icon: ""
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                padding: [20, 0]
+                MDLabel:
+                    text: "Результат:"
+                MDLabel:
+                    text: app.result
+                MDIconButton:
+                    icon: ""
+                    
     MDFloatingActionButton:
         icon: "arrow-left"
         icon_color: '#FFFFFF'
@@ -95,14 +159,13 @@ class MainApp(MDApp):
     queue_timeout_enabled = BooleanProperty(True)
     queue_timeout = StringProperty('1000')
     device_name = StringProperty('')
+    result = StringProperty('')
+    result_time = StringProperty('')
+    metric = StringProperty('m')
+    L = StringProperty('')
+    H = StringProperty('')
     devices_address_list = []
-    value_list = []
-
-    # value_list = ['1.906m\r\n\x00', '1.861m\r\n\x00',]
-    buttom_list = []
     count = 0
-    froze = 1
-    clean_buttom = None
 
     uids = {
         'string': 'ffb2',
@@ -131,12 +194,6 @@ class MainApp(MDApp):
         self.sm.add_widget(self.kv1)
         self.sm.add_widget(self.kv2)
 
-        self.clean_buttom = MDTextButton(
-                text='Очистить',
-                pos_hint={'top': .97, 'right': .98},
-                on_press=self.clean_list_bottom
-
-            )
         self.manager_open = False
         self.file_manager = MDFileManager(
             exit_manager=self.exit_manager, 
@@ -144,16 +201,33 @@ class MainApp(MDApp):
             selector='folder'
         )
 
-        self.clean_buttom.color = 'white'
-
         Clock.schedule_once(self.start_scan, 1)
         return self.sm
     
-    def clean_list_bottom(self, *args):
-        self.kv2.remove_widget(self.clean_buttom)
-        for item in self.buttom_list:
-            self.kv2.ids.result.remove_widget(item)
-        self.froze = 1
+    def on_checkbox_active(self, checkbox, value):
+        if value:
+            self.metric = 'mm'
+            if self.H: self.H = self.format_metric(self.H, self.metric)
+            if self.L: self.L = self.format_metric(self.L, self.metric)
+        else:
+            self.metric = 'm'
+            if self.H: self.H = self.format_metric(self.H, self.metric)
+            if self.L: self.L = self.format_metric(self.L, self.metric)
+
+    def format_metric(self, value, metric):
+        if metric == 'mm':
+            return str(int(float(value)*1000))
+        else:
+            if '.' in value:
+                return value
+            else:
+                return str(int(value)/1000)
+
+    def clean_l(self):
+        self.L = ''
+
+    def clean_h(self):
+        self.H = ''
 
     def start_scan_button(self):
         self.count = 0
@@ -198,17 +272,6 @@ class MainApp(MDApp):
             )
         self.devices_address_list.append(devices_address)
 
-    @mainthread
-    def list_result(self, result):
-        if self.froze == 1:
-            self.kv2.add_widget(self.clean_buttom)
-        bl = OneLineListItem(
-                    text=f'Замер {self.froze}: {result}',
-                )
-        self.buttom_list.append(bl)
-        self.kv2.ids.result.add_widget(bl)
-        self.froze += 1
-
     def on_scan_completed(self, ble):
         self.count = 0
 
@@ -223,7 +286,6 @@ class MainApp(MDApp):
     def backpase_button(self):
         self.ble.close_gatt()
         self.ble.stop_scan()
-        self.clean_list_bottom()
         self.sm.current = 'first'
 
     def on_connection_state_change(self, ble, status, state):
@@ -253,10 +315,22 @@ class MainApp(MDApp):
         uuid = characteristic.getUuid().toString()
         if self.uids['string'] in uuid:
             value = characteristic.getStringValue(0)
-            self.value_list.append(value)
-            print(self.value_list)
-            self.list_result(value)
+            if not self.H and not self.L:
+                self.H = self.format_metric(self.frormat_value(value), self.metric)
+            elif self.H and not self.L:
+                self.L = self.format_metric(self.frormat_value(value), self.metric)
+            elif not self.H and self.L:
+                self.H = self.format_metric(self.frormat_value(value), self.metric)
 
+            if self.H and self.L:
+                print(self.H, self.L)
+
+    def frormat_value(self, value):
+        if 'm' in value:
+            return value.split('m')[0]
+        else:
+            return ''
+            
     def set_queue_settings(self):
         self.ble.set_queue_timeout(None if not self.queue_timeout_enabled
                                    else int(self.queue_timeout) * .001)
