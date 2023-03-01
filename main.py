@@ -20,298 +20,6 @@ Config.set('kivy', 'log_level', 'debug')
 Config.set('kivy', 'log_enable', '1')
 
 
-KV1 = '''
-MDScreen:
-    name: 'first'
-
-    MDScrollView:
-        orientation: "vertical"
-        padding: "0dp"
-        adaptive_height: True
-        pos_hint: {"top": .9}
-        id: list
-                
-        MDList:
-            id: container
-
-    MDFloatingActionButton:
-        icon: "magnify"
-        icon_color: '#FFFFFF'
-        theme_icon_color: "Custom"
-        on_press: app.start_scan_button()
-        pos_hint: {'top': .11, 'right': .97}
-
-    MDNavigationLayout:
-
-        MDScreenManager:
-
-            MDScreen:
-
-                MDTopAppBar:
-                    id: toolbar
-                    title: app.state
-                    elevation: 4
-                    pos_hint: {'top': 1}
-                    size_hint_y: .10
-                    left_action_items:[['menu', lambda x: nav_drawer.set_state("open")]]
-
-
-        MDNavigationDrawer:
-            id: nav_drawer
-
-            MDNavigationDrawerMenu:
-                
-                MDNavigationDrawerHeader:
-                    title: "Меню"
-                    title_color: "#4a4939"
-
-                    MDIconButton:
-                        icon: "close"
-                        on_press: nav_drawer.set_state("close")
-
-                MDNavigationDrawerDivider:
-
-                MDNavigationDrawerItem:
-                    icon: "bluetooth-connect"
-                    text: "Поиск"
-                    on_press: 
-                        nav_drawer.set_state("close")
-                        app.show_main()
-
-                MDNavigationDrawerItem:
-                    icon: "calculator-variant-outline"
-                    text: "Вычисления"
-                    on_press: 
-                        nav_drawer.set_state("close")
-                        app.show_calculations()
-
-                MDNavigationDrawerItem:
-                    icon: "clipboard-text-clock-outline"
-                    text: "История"
-                    on_press: 
-                        nav_drawer.set_state("close")
-                        app.show_history()
-'''
-
-KV2 = '''
-MDScreen:
-    name: 'calculations'
-
-    MDFloatLayout:
-        orientation: "vertical"
-
-        MDBoxLayout:
-            orientation: "vertical"
-            size_hint_y: .10
-            pos_hint: {'top': .90}
-
-            MDBoxLayout:
-                orientation: "horizontal"
-                padding: [20, 0]
-                MDLabel:
-                    text: "Миллиметр/метр:"
-                    pos_hint: {"center_y": .5}
-                MDBoxLayout:
-                    MDSwitch:
-                        pos_hint: {"center_y": .5}
-                        on_active: app.on_checkbox_active(*args)
-                MDIconButton:
-                    icon: ""
-
-        MDBoxLayout:
-            orientation: "vertical"
-            size_hint_y: .30
-            pos_hint: {'top': .80}
-
-            MDBoxLayout:
-                orientation: "horizontal"
-                padding: [20, 0]
-                md_bg_color: "#F0F0F0"
-                MDLabel:
-                    text: "Дата и время:"
-                MDLabel:
-                    text: app.result_time
-                MDIconButton:
-                    icon: ""
-
-            MDBoxLayout:
-                orientation: "horizontal"
-                padding: [20, 0]
-                MDLabel:
-                    text: "Высота сегмента h:"
-                MDLabel:
-                    text: app.H + app.metric
-                MDIconButton:
-                    icon: "delete-circle"
-                    theme_icon_color: "Custom"
-                    icon_color: app.theme_cls.primary_color
-                    on_press: app.clean_h()
-
-            MDBoxLayout:
-                orientation: "horizontal"
-                padding: [20, 0]
-                md_bg_color: "#F0F0F0"
-                MDLabel:
-                    text: "Хорда L:"
-                MDLabel:
-                    text: app.L + app.metric
-                MDIconButton:
-                    icon: "delete-circle"
-                    theme_icon_color: "Custom"
-                    icon_color: app.theme_cls.primary_color
-                    on_press: app.clean_l()
-
-            MDBoxLayout:
-                orientation: "horizontal"
-                padding: [20, 0]
-                MDLabel:
-                    text: "Радиус:"
-                MDLabel:
-                    text: app.result + app.metric
-                MDIconButton:
-                    icon: ""
-
-    MDFloatingActionButton:
-        icon: "content-save-check-outline"
-        icon_color: '#FFFFFF'
-        theme_icon_color: "Custom"
-        on_press: app.backpase_button()
-        pos_hint: {'top': .11, 'right': .97}
-
-    MDFloatingActionButton:
-        icon: "broom"
-        pos_hint: {'top': .11, 'x': .03}
-        on_release: app.clean_all()
-
-    MDNavigationLayout:
-
-        MDScreenManager:
-
-            MDScreen:
-
-                MDTopAppBar:
-                    id: toolbar
-                    title: app.device_name
-                    elevation: 4
-                    pos_hint: {'top': 1}
-                    size_hint_y: .10
-                    left_action_items:[['menu', lambda x: nav_drawer.set_state("open")]]
-
-        MDNavigationDrawer:
-            id: nav_drawer
-            
-            MDNavigationDrawerMenu:
-                
-                MDNavigationDrawerHeader:
-                    title: "Меню"
-                    title_color: "#4a4939"
-
-                    MDIconButton:
-                        icon: "close"
-                        on_press: nav_drawer.set_state("close")
-
-                MDNavigationDrawerDivider:
-
-                MDNavigationDrawerItem:
-                    icon: "bluetooth-connect"
-                    text: "Поиск"
-                    on_press: 
-                        nav_drawer.set_state("close")
-                        app.show_main()
-
-                MDNavigationDrawerItem:
-                    icon: "calculator-variant-outline"
-                    text: "Вычисления"
-                    on_press: 
-                        nav_drawer.set_state("close")
-                        app.show_calculations()
-
-                MDNavigationDrawerItem:
-                    icon: "clipboard-text-clock-outline"
-                    text: "История"
-                    on_press: 
-                        nav_drawer.set_state("close")
-                        app.show_history()
-'''
-
-KV3 = '''
-MDScreen:
-    name: 'history'
-
-    MDScrollView:
-        orientation: "vertical"
-        padding: "0dp"
-        adaptive_height: True
-        pos_hint: {"top": .9}
-        id: list
-                
-        MDList:
-            id: container
-
-    MDFloatingActionButton:
-        icon: "content-save-all-outline"
-        icon_color: '#FFFFFF'
-        theme_icon_color: "Custom"
-        on_press: app.start_scan_button()
-        pos_hint: {'top': .11, 'right': .97}
-
-    MDFloatingActionButton:
-        icon: "broom"
-        pos_hint: {'top': .11, 'x': .03}
-        on_release: app.clean_all()
-
-    MDNavigationLayout:
-
-        MDScreenManager:
-
-            MDScreen:
-
-                MDTopAppBar:
-                    id: toolbar
-                    title: 'История'
-                    elevation: 4
-                    pos_hint: {'top': 1}
-                    size_hint_y: .10
-                    left_action_items:[['menu', lambda x: nav_drawer.set_state("open")]]
-
-
-        MDNavigationDrawer:
-            id: nav_drawer
-
-            MDNavigationDrawerMenu:
-                
-                MDNavigationDrawerHeader:
-                    title: "Меню"
-                    title_color: "#4a4939"
-
-                    MDIconButton:
-                        icon: "close"
-                        on_press: nav_drawer.set_state("close")
-
-                MDNavigationDrawerDivider:
-
-                MDNavigationDrawerItem:
-                    icon: "bluetooth-connect"
-                    text: "Поиск"
-                    on_press: 
-                        nav_drawer.set_state("close")
-                        app.show_main()
-
-                MDNavigationDrawerItem:
-                    icon: "calculator-variant-outline"
-                    text: "Вычисления"
-                    on_press: 
-                        nav_drawer.set_state("close")
-                        app.show_calculations()
-
-                MDNavigationDrawerItem:
-                    icon: "clipboard-text-clock-outline"
-                    text: "История"
-                    on_press: 
-                        nav_drawer.set_state("close")
-                        app.show_history()
-'''
-
 class TwoLineListItemCustom(TwoLineListItem):
     device_object = None 
 
@@ -332,6 +40,7 @@ class MainApp(MDApp):
     L = StringProperty('')
     H = StringProperty('')
     devices_address_list = []
+    result_list = []
     count = 0
 
     uids = {
@@ -354,9 +63,9 @@ class MainApp(MDApp):
         self.ble.bind(on_characteristic_changed=self.on_characteristic_changed)
 
     def build(self):
-        self.kv1 =  Builder.load_string(KV1)
-        self.kv2 =  Builder.load_string(KV2)
-        self.kv3 =  Builder.load_string(KV3)
+        self.kv1 =  Builder.load_file('kv1.kv')
+        self.kv2 =  Builder.load_file('kv2.kv')
+        self.kv3 =  Builder.load_file('kv3.kv')
 
         self.sm = MDScreenManager()
         self.sm.add_widget(self.kv1)
@@ -376,8 +85,10 @@ class MainApp(MDApp):
     def on_checkbox_active(self, checkbox, value):
         if value:
             self.metric = 'm'
+            toast('Метр')
         else:
             self.metric = 'mm'
+            toast('Миллиметр')
         if self.H: self.H = self.format_metric(self.H, self.metric)
         if self.L: self.L = self.format_metric(self.L, self.metric)
 
@@ -397,11 +108,29 @@ class MainApp(MDApp):
         self.L = ''
         self.result = ''
         self.result_time = ''
+        toast('Очищено')
 
     def clean_h(self):
         self.H = ''
         self.result = ''
         self.result_time = ''
+        toast('Очищено')
+
+    def clean_all(self):
+        self.L = ''
+        self.H = ''
+        self.result = ''
+        self.result_time = ''
+        toast('Очищено')
+
+    def clean_result_all(self):
+        toast('История очищена')
+
+    def append_result_list(self):
+        if not self.result:
+            toast('Прежде чем добавить результат в историю произведите вычисления')
+        else:
+            toast('Результат добавлен в историю')
 
     def start_scan_button(self):
         self.count = 0
@@ -464,6 +193,8 @@ class MainApp(MDApp):
         self.sm.current = 'history'
 
     def show_calculations(self):
+        if not self.device_name:
+            toast('Выполните соединение с устройством')
         self.sm.current = 'calculations'
 
     def on_connection_state_change(self, ble, status, state):
@@ -529,8 +260,8 @@ class MainApp(MDApp):
                                    else int(self.queue_timeout) * .001)
         
     def file_manager_open(self):
-        if not self.result:
-            toast('Выполните вычисления')
+        if not self.result_list:
+            toast('Сначала выполните и сохраните вычисления')
         else:
             self.file_manager.show('/storage/emulated/0/')  # output manager to the screen
             self.manager_open = True

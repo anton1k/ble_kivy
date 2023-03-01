@@ -1,0 +1,69 @@
+MDScreen:
+    name: 'first'
+
+    MDScrollView:
+        orientation: "vertical"
+        padding: "0dp"
+        adaptive_height: True
+        pos_hint: {"top": .9}
+        id: list
+                
+        MDList:
+            id: container
+
+    MDFloatingActionButton:
+        icon: "magnify"
+        icon_color: '#FFFFFF'
+        theme_icon_color: "Custom"
+        on_press: app.start_scan_button()
+        pos_hint: {'top': .11, 'right': .97}
+
+    MDNavigationLayout:
+
+        MDScreenManager:
+
+            MDScreen:
+
+                MDTopAppBar:
+                    id: toolbar
+                    title: app.state
+                    elevation: 4
+                    pos_hint: {'top': 1}
+                    size_hint_y: .10
+                    left_action_items:[['menu', lambda x: nav_drawer.set_state("open")]]
+
+        MDNavigationDrawer:
+            id: nav_drawer
+
+            MDNavigationDrawerMenu:
+                
+                MDNavigationDrawerHeader:
+                    title: "Меню"
+                    title_color: "#4a4939"
+
+                    MDIconButton:
+                        icon: "close"
+                        on_press: nav_drawer.set_state("close")
+
+                MDNavigationDrawerDivider:
+
+                MDNavigationDrawerItem:
+                    icon: "bluetooth-connect"
+                    text: "Поиск"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_main()
+
+                MDNavigationDrawerItem:
+                    icon: "calculator-variant-outline"
+                    text: "Вычисления"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_calculations()
+
+                MDNavigationDrawerItem:
+                    icon: "clipboard-text-clock-outline"
+                    text: "История"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_history()

@@ -1,0 +1,138 @@
+MDScreen:
+    name: 'calculations'
+
+    MDFloatLayout:
+        orientation: "vertical"
+
+        MDBoxLayout:
+            orientation: "vertical"
+            size_hint_y: .10
+            pos_hint: {'top': .90}
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                padding: [20, 0]
+                MDLabel:
+                    text: "Миллиметр/метр:"
+                    pos_hint: {"center_y": .5}
+                MDBoxLayout:
+                    MDSwitch:
+                        pos_hint: {"center_y": .5}
+                        on_active: app.on_checkbox_active(*args)
+                MDIconButton:
+                    icon: ""
+
+        MDBoxLayout:
+            orientation: "vertical"
+            size_hint_y: .30
+            pos_hint: {'top': .80}
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                padding: [20, 0]
+                md_bg_color: "#F0F0F0"
+                MDLabel:
+                    text: "Дата и время:"
+                MDLabel:
+                    text: app.result_time
+                MDIconButton:
+                    icon: ""
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                padding: [20, 0]
+                MDLabel:
+                    text: "Высота сегмента h:"
+                MDLabel:
+                    text: app.H + app.metric
+                MDIconButton:
+                    icon: "delete-circle"
+                    theme_icon_color: "Custom"
+                    icon_color: app.theme_cls.primary_color
+                    on_press: app.clean_h()
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                padding: [20, 0]
+                md_bg_color: "#F0F0F0"
+                MDLabel:
+                    text: "Хорда L:"
+                MDLabel:
+                    text: app.L + app.metric
+                MDIconButton:
+                    icon: "delete-circle"
+                    theme_icon_color: "Custom"
+                    icon_color: app.theme_cls.primary_color
+                    on_press: app.clean_l()
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                padding: [20, 0]
+                MDLabel:
+                    text: "Радиус:"
+                MDLabel:
+                    text: app.result + app.metric
+                MDIconButton:
+                    icon: ""
+
+    MDFloatingActionButton:
+        icon: "content-save-check-outline"
+        icon_color: '#FFFFFF'
+        theme_icon_color: "Custom"
+        on_press: app.append_result_list()
+        pos_hint: {'top': .11, 'right': .97}
+
+    MDFloatingActionButton:
+        icon: "broom"
+        pos_hint: {'top': .11, 'x': .03}
+        on_release: app.clean_all()
+
+    MDNavigationLayout:
+
+        MDScreenManager:
+
+            MDScreen:
+
+                MDTopAppBar:
+                    id: toolbar
+                    title: app.device_name
+                    elevation: 4
+                    pos_hint: {'top': 1}
+                    size_hint_y: .10
+                    left_action_items:[['menu', lambda x: nav_drawer.set_state("open")]]
+
+        MDNavigationDrawer:
+            id: nav_drawer
+            
+            MDNavigationDrawerMenu:
+                
+                MDNavigationDrawerHeader:
+                    title: "Меню"
+                    title_color: "#4a4939"
+
+                    MDIconButton:
+                        icon: "close"
+                        on_press: nav_drawer.set_state("close")
+
+                MDNavigationDrawerDivider:
+
+                MDNavigationDrawerItem:
+                    icon: "bluetooth-connect"
+                    text: "Поиск"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_main()
+
+                MDNavigationDrawerItem:
+                    icon: "calculator-variant-outline"
+                    text: "Вычисления"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_calculations()
+
+                MDNavigationDrawerItem:
+                    icon: "clipboard-text-clock-outline"
+                    text: "История"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_history()
