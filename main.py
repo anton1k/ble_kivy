@@ -125,7 +125,7 @@ MDScreen:
                 orientation: "horizontal"
                 padding: [20, 0]
                 MDLabel:
-                    text: "Результат:"
+                    text: "Радиус:"
                 MDLabel:
                     text: app.result
                 MDIconButton:
@@ -301,6 +301,7 @@ class MainApp(MDApp):
                 self.state = 'disconnected'
         else:
             self.state = 'connection_error'
+            self.device_name = 'connection_error'
 
     def on_services(self, ble, status, services):
         if status != GATT_SUCCESS:
