@@ -88,6 +88,16 @@ MDScreen:
                 padding: [20, 0]
                 md_bg_color: "#F0F0F0"
                 MDLabel:
+                    text: "Дата и время:"
+                MDLabel:
+                    text: app.result_time
+                MDIconButton:
+                    icon: ""
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                padding: [20, 0]
+                MDLabel:
                     text: "Высота сегмента h:"
                 MDLabel:
                     text: app.H + app.metric
@@ -100,6 +110,7 @@ MDScreen:
             MDBoxLayout:
                 orientation: "horizontal"
                 padding: [20, 0]
+                md_bg_color: "#F0F0F0"
                 MDLabel:
                     text: "Хорда L:"
                 MDLabel:
@@ -113,21 +124,10 @@ MDScreen:
             MDBoxLayout:
                 orientation: "horizontal"
                 padding: [20, 0]
-                md_bg_color: "#F0F0F0"
-                MDLabel:
-                    text: "Дата и время:"
-                MDLabel:
-                    text: app.result_time
-                MDIconButton:
-                    icon: ""
-
-            MDBoxLayout:
-                orientation: "horizontal"
-                padding: [20, 0]
                 MDLabel:
                     text: "Радиус:"
                 MDLabel:
-                    text: app.result
+                    text: app.result + app.metric
                 MDIconButton:
                     icon: ""
                     
@@ -356,9 +356,13 @@ class MainApp(MDApp):
                                    else int(self.queue_timeout) * .001)
         
     def file_manager_open(self):
-        self.file_manager.show(os.path.expanduser("~"))  # output manager to the screen
-        self.manager_open = True
-        # self.file_manager.show_disks()
+        if not self.result:
+            toast('Выполните вычисления')
+        else:
+            self.file_manager.show('/storage/emulated/0/')  # output manager to the screen
+            self.manager_open = True
+            # self.file_manager.show_disks()
+
 
     def select_path(self, path: str):
         self.exit_manager()
