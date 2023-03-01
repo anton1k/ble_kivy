@@ -69,7 +69,7 @@ MDScreen:
                 orientation: "horizontal"
                 padding: [20, 0]
                 MDLabel:
-                    text: "Метр/миллиметр:"
+                    text: "Миллиметр/метр:"
                     pos_hint: {"center_y": .5}
                 MDBoxLayout:
                     MDSwitch:
