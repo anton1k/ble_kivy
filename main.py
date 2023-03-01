@@ -1,16 +1,18 @@
-import os
 import datetime
+import os
 
 from kivy.clock import Clock, mainthread
 from kivy.config import Config
 from kivy.lang import Builder
-from kivy.properties import BooleanProperty, StringProperty
+from kivy.properties import BooleanProperty, ObjectProperty, StringProperty
 from kivymd.app import MDApp
 from kivymd.toast import toast
+from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDTextButton
 from kivymd.uix.filemanager import MDFileManager
 from kivymd.uix.list import OneLineListItem, TwoLineListItem
 from kivymd.uix.screenmanager import MDScreenManager
+from kivymd.uix.scrollview import MDScrollView
 
 from able import GATT_SUCCESS, BluetoothDispatcher
 
@@ -21,14 +23,6 @@ Config.set('kivy', 'log_enable', '1')
 KV1 = '''
 MDScreen:
     name: 'first'
-
-    MDTopAppBar:
-        id: toolbar
-        title: app.state
-        elevation: 4
-        pos_hint: {'top': 1}
-        size_hint_y: .10
-
 
     MDScrollView:
         orientation: "vertical"
@@ -46,16 +40,62 @@ MDScreen:
         theme_icon_color: "Custom"
         on_press: app.start_scan_button()
         pos_hint: {'top': .11, 'right': .97}
+
+    MDNavigationLayout:
+
+        MDScreenManager:
+
+            MDScreen:
+
+                MDTopAppBar:
+                    id: toolbar
+                    title: app.state
+                    elevation: 4
+                    pos_hint: {'top': 1}
+                    size_hint_y: .10
+                    left_action_items:[['menu', lambda x: nav_drawer.set_state("open")]]
+
+
+        MDNavigationDrawer:
+            id: nav_drawer
+
+            MDNavigationDrawerMenu:
+                
+                MDNavigationDrawerHeader:
+                    title: "Меню"
+                    title_color: "#4a4939"
+
+                    MDIconButton:
+                        icon: "close"
+                        on_press: nav_drawer.set_state("close")
+
+                MDNavigationDrawerDivider:
+
+                MDNavigationDrawerItem:
+                    icon: "bluetooth-connect"
+                    text: "Поиск"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_main()
+
+                MDNavigationDrawerItem:
+                    icon: "calculator-variant-outline"
+                    text: "Вычисления"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_calculations()
+
+                MDNavigationDrawerItem:
+                    icon: "clipboard-text-clock-outline"
+                    text: "История"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_history()
 '''
 
 KV2 = '''
 MDScreen:
-    name: 'two'
-
-    MDTopAppBar:
-        title: app.device_name
-        pos_hint: {'top': 1}
-        size_hint_y: .10
+    name: 'calculations'
 
     MDFloatLayout:
         orientation: "vertical"
@@ -130,20 +170,147 @@ MDScreen:
                     text: app.result + app.metric
                 MDIconButton:
                     icon: ""
-                    
+
     MDFloatingActionButton:
-        icon: "arrow-left"
+        icon: "content-save-check-outline"
         icon_color: '#FFFFFF'
         theme_icon_color: "Custom"
         on_press: app.backpase_button()
         pos_hint: {'top': .11, 'right': .97}
 
     MDFloatingActionButton:
-        icon: "content-save"
+        icon: "broom"
         pos_hint: {'top': .11, 'x': .03}
-        on_release: app.file_manager_open()
+        on_release: app.clean_all()
+
+    MDNavigationLayout:
+
+        MDScreenManager:
+
+            MDScreen:
+
+                MDTopAppBar:
+                    id: toolbar
+                    title: app.device_name
+                    elevation: 4
+                    pos_hint: {'top': 1}
+                    size_hint_y: .10
+                    left_action_items:[['menu', lambda x: nav_drawer.set_state("open")]]
+
+        MDNavigationDrawer:
+            id: nav_drawer
+            
+            MDNavigationDrawerMenu:
+                
+                MDNavigationDrawerHeader:
+                    title: "Меню"
+                    title_color: "#4a4939"
+
+                    MDIconButton:
+                        icon: "close"
+                        on_press: nav_drawer.set_state("close")
+
+                MDNavigationDrawerDivider:
+
+                MDNavigationDrawerItem:
+                    icon: "bluetooth-connect"
+                    text: "Поиск"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_main()
+
+                MDNavigationDrawerItem:
+                    icon: "calculator-variant-outline"
+                    text: "Вычисления"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_calculations()
+
+                MDNavigationDrawerItem:
+                    icon: "clipboard-text-clock-outline"
+                    text: "История"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_history()
 '''
 
+KV3 = '''
+MDScreen:
+    name: 'history'
+
+    MDScrollView:
+        orientation: "vertical"
+        padding: "0dp"
+        adaptive_height: True
+        pos_hint: {"top": .9}
+        id: list
+                
+        MDList:
+            id: container
+
+    MDFloatingActionButton:
+        icon: "content-save-all-outline"
+        icon_color: '#FFFFFF'
+        theme_icon_color: "Custom"
+        on_press: app.start_scan_button()
+        pos_hint: {'top': .11, 'right': .97}
+
+    MDFloatingActionButton:
+        icon: "broom"
+        pos_hint: {'top': .11, 'x': .03}
+        on_release: app.clean_all()
+
+    MDNavigationLayout:
+
+        MDScreenManager:
+
+            MDScreen:
+
+                MDTopAppBar:
+                    id: toolbar
+                    title: 'История'
+                    elevation: 4
+                    pos_hint: {'top': 1}
+                    size_hint_y: .10
+                    left_action_items:[['menu', lambda x: nav_drawer.set_state("open")]]
+
+
+        MDNavigationDrawer:
+            id: nav_drawer
+
+            MDNavigationDrawerMenu:
+                
+                MDNavigationDrawerHeader:
+                    title: "Меню"
+                    title_color: "#4a4939"
+
+                    MDIconButton:
+                        icon: "close"
+                        on_press: nav_drawer.set_state("close")
+
+                MDNavigationDrawerDivider:
+
+                MDNavigationDrawerItem:
+                    icon: "bluetooth-connect"
+                    text: "Поиск"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_main()
+
+                MDNavigationDrawerItem:
+                    icon: "calculator-variant-outline"
+                    text: "Вычисления"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_calculations()
+
+                MDNavigationDrawerItem:
+                    icon: "clipboard-text-clock-outline"
+                    text: "История"
+                    on_press: 
+                        nav_drawer.set_state("close")
+                        app.show_history()
+'''
 
 class TwoLineListItemCustom(TwoLineListItem):
     device_object = None 
@@ -189,10 +356,12 @@ class MainApp(MDApp):
     def build(self):
         self.kv1 =  Builder.load_string(KV1)
         self.kv2 =  Builder.load_string(KV2)
+        self.kv3 =  Builder.load_string(KV3)
 
         self.sm = MDScreenManager()
         self.sm.add_widget(self.kv1)
         self.sm.add_widget(self.kv2)
+        self.sm.add_widget(self.kv3)
 
         self.manager_open = False
         self.file_manager = MDFileManager(
@@ -242,8 +411,8 @@ class MainApp(MDApp):
         if not self.state:
             self.init()
         self.state = 'scan_start'
-        self.ble.close_gatt()
-        self.ble.start_scan()
+        # self.ble.close_gatt()
+        # self.ble.start_scan()
 
     def on_scan_started(self, ble, success):
         self.state = 'Поиск' if success else ''
@@ -285,13 +454,17 @@ class MainApp(MDApp):
         self.ble.stop_scan()
         self.device = instance.device_object
         self.device_name = 'Соединение'
-        self.sm.current = 'two'
+        self.sm.current = 'calculations'
         self.ble.connect_gatt(instance.device_object)
 
-    def backpase_button(self):
-        self.ble.close_gatt()
-        self.ble.stop_scan()
+    def show_main(self):
         self.sm.current = 'first'
+
+    def show_history(self):
+        self.sm.current = 'history'
+
+    def show_calculations(self):
+        self.sm.current = 'calculations'
 
     def on_connection_state_change(self, ble, status, state):
         if status == GATT_SUCCESS:
