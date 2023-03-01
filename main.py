@@ -1,5 +1,5 @@
 import os
-import time
+import datetime
 
 from kivy.clock import Clock, mainthread
 from kivy.config import Config
@@ -88,7 +88,7 @@ MDScreen:
                 padding: [20, 0]
                 md_bg_color: "#F0F0F0"
                 MDLabel:
-                    text: "H:"
+                    text: "Высота сегмента h:"
                 MDLabel:
                     text: app.H + app.metric
                 MDIconButton:
@@ -101,7 +101,7 @@ MDScreen:
                 orientation: "horizontal"
                 padding: [20, 0]
                 MDLabel:
-                    text: "L:"
+                    text: "Хорда L:"
                 MDLabel:
                     text: app.L + app.metric
                 MDIconButton:
@@ -161,7 +161,7 @@ class MainApp(MDApp):
     device_name = StringProperty('')
     result = StringProperty('')
     result_time = StringProperty('')
-    metric = StringProperty('m')
+    metric = StringProperty('mm')
     L = StringProperty('')
     H = StringProperty('')
     devices_address_list = []
@@ -206,13 +206,11 @@ class MainApp(MDApp):
     
     def on_checkbox_active(self, checkbox, value):
         if value:
-            self.metric = 'mm'
-            if self.H: self.H = self.format_metric(self.H, self.metric)
-            if self.L: self.L = self.format_metric(self.L, self.metric)
-        else:
             self.metric = 'm'
-            if self.H: self.H = self.format_metric(self.H, self.metric)
-            if self.L: self.L = self.format_metric(self.L, self.metric)
+        else:
+            self.metric = 'mm'
+        if self.H: self.H = self.format_metric(self.H, self.metric)
+        if self.L: self.L = self.format_metric(self.L, self.metric)
 
     def format_metric(self, value, metric):
         if metric == 'mm':
@@ -225,9 +223,13 @@ class MainApp(MDApp):
 
     def clean_l(self):
         self.L = ''
+        self.result = ''
+        self.result_time = ''
 
     def clean_h(self):
         self.H = ''
+        self.result = ''
+        self.result_time = ''
 
     def start_scan_button(self):
         self.count = 0
@@ -323,7 +325,16 @@ class MainApp(MDApp):
                 self.H = self.format_metric(self.frormat_value(value), self.metric)
 
             if self.H and self.L:
-                print(self.H, self.L)
+                now = datetime.datetime.now()
+                self.result_time = now.strftime('%Y-%m-%d:%H-%M')
+                if self.metric == 'mm':
+                    h = int(self.H)
+                    L = int(self.L)
+                else:
+                    h = float(self.H)
+                    L = float(self.L)
+                result = round((((L**2)/(4*h))+h)/2, 2)
+                self.result = str(result)
 
     def frormat_value(self, value):
         if 'm' in value:

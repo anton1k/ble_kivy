@@ -4,10 +4,10 @@
 android.logcat_filters = *:S python:D
 
 # (str) Title of your application
-title = DT20
+title = Radius DT20
 
 # (str) Package name
-package.name = bt_scaner
+package.name = radius_dt20
 
 # (str) Package domain (needed for android/ios packaging)
 # package.domain = org.kivy
