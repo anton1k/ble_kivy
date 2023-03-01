@@ -212,6 +212,9 @@ class MainApp(MDApp):
         if self.H: self.H = self.format_metric(self.H, self.metric)
         if self.L: self.L = self.format_metric(self.L, self.metric)
 
+        if self.H and self.L:
+            self.result_calculation()
+
     def format_metric(self, value, metric):
         if metric == 'mm':
             return str(int(float(value)*1000))
@@ -327,14 +330,19 @@ class MainApp(MDApp):
             if self.H and self.L:
                 now = datetime.datetime.now()
                 self.result_time = now.strftime('%Y-%m-%d:%H-%M')
-                if self.metric == 'mm':
-                    h = int(self.H)
-                    L = int(self.L)
-                else:
-                    h = float(self.H)
-                    L = float(self.L)
-                result = round((((L**2)/(4*h))+h)/2, 2)
-                self.result = str(result)
+                self.result_calculation()
+                
+    def result_calculation(self):
+        if self.metric == 'mm':
+            h = int(self.H)
+            L = int(self.L)
+            f = 2
+        else:
+            h = float(self.H)
+            L = float(self.L)
+            f = 3
+        result = round((((L**2)/(4*h))+h)/2, f)
+        self.result = str(result)
 
     def frormat_value(self, value):
         if 'm' in value:
