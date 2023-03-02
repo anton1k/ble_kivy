@@ -24,7 +24,7 @@ version = 0.0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy==2.1.0,kivymd==1.0.2,android,able_recipe,python-dateutil,pyjnius,plyer,openssl,requests,urllib3,chardet,idna,pip,Image,PIL
+requirements = python3,kivy==2.1.0,kivymd==1.0.2,android,able_recipe,python-dateutil,pyjnius,plyer,openssl,requests,urllib3,chardet,idna,pip,Image,PIL,xlsxwriter
 
 #services = Able:service.py:foreground
 

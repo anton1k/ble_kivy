@@ -1,5 +1,6 @@
 import datetime
 
+import xlsxwriter
 from kivy.clock import Clock, mainthread
 from kivy.config import Config
 from kivy.lang import Builder
@@ -7,12 +8,12 @@ from kivy.properties import BooleanProperty, StringProperty
 from kivy.storage.jsonstore import JsonStore
 from kivymd.app import MDApp
 from kivymd.toast import toast
+from kivymd.uix.button import MDRectangleFlatButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.filemanager import MDFileManager
 from kivymd.uix.list import (IconRightWidget, OneLineAvatarIconListItem,
                              TwoLineListItem)
 from kivymd.uix.screenmanager import MDScreenManager
-from kivymd.uix.button import MDRectangleFlatButton
 
 from able import GATT_SUCCESS, BluetoothDispatcher
 
@@ -40,11 +41,11 @@ class MainApp(MDApp):
     queue_timeout_enabled = BooleanProperty(True)
     queue_timeout = StringProperty('1000')
     device_name = StringProperty('')
-    result = StringProperty('534')
-    result_time = StringProperty('2023.03.02:19.33.54')
+    result = StringProperty('')
+    result_time = StringProperty('')
     metric = StringProperty('mm')
-    L = StringProperty('234')
-    H = StringProperty('123')
+    L = StringProperty('')
+    H = StringProperty('')
     store = JsonStore('store.json')
     devices_address_list = []
     result_list = []
@@ -185,8 +186,8 @@ class MainApp(MDApp):
         if not self.state:
             self.init()
         self.state = 'Поиск'
-        # self.ble.close_gatt()
-        # self.ble.start_scan()
+        self.ble.close_gatt()
+        self.ble.start_scan()
 
     def on_scan_started(self, ble, success):
         self.state = 'Поиск' if success else ''
@@ -327,14 +328,30 @@ class MainApp(MDApp):
         if not self.result_list:
             toast('Сначала выполните и сохраните вычисления')
         else:
-            # self.file_manager.show('/storage/emulated/0/')  # output manager to the screen
-            # self.manager_open = True
-            self.file_manager.show_disks()
+            self.file_manager.show('/storage/emulated/0/')  # output manager to the screen
+            self.manager_open = True
+            # self.file_manager.show_disks()
 
 
     def select_path(self, path: str):
         self.exit_manager()
-        toast(path)
+        new_list = [['Дата/время', 'Хорда L', 'Высота сегмента h', 'Радиус'],]
+        now = datetime.datetime.now()
+        time_string = now.strftime('%Y.%m.%d:%H.%M.%S')
+        for key in self.store:
+            new_list.append([
+                self.store[key]['result_time'],
+                self.store[key]['H']+self.store[key]['metric'],
+                self.store[key]['L']+self.store[key]['metric'],
+                self.store[key]['result']+self.store[key]['metric'],
+                ])
+        path = f'{path}/results-{time_string}.xlsx'
+        with xlsxwriter.Workbook(path) as workbook:
+            worksheet = workbook.add_worksheet()
+
+            for row_num, data in enumerate(new_list):
+                worksheet.write_row(row_num, 0, data)
+        toast(f'Сохранено в: {path}')
 
     def exit_manager(self, *args):
         self.manager_open = False
