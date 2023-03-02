@@ -7,9 +7,12 @@ from kivy.properties import BooleanProperty, StringProperty
 from kivy.storage.jsonstore import JsonStore
 from kivymd.app import MDApp
 from kivymd.toast import toast
+from kivymd.uix.dialog import MDDialog
 from kivymd.uix.filemanager import MDFileManager
-from kivymd.uix.list import TwoLineListItem
+from kivymd.uix.list import (IconRightWidget, OneLineAvatarIconListItem,
+                             TwoLineListItem)
 from kivymd.uix.screenmanager import MDScreenManager
+from kivymd.uix.button import MDRectangleFlatButton
 
 from able import GATT_SUCCESS, BluetoothDispatcher
 
@@ -18,11 +21,17 @@ Config.set('kivy', 'log_enable', '1')
 
 
 class TwoLineListItemCustom(TwoLineListItem):
-    device_object = None 
 
     def __init__(self, device_object, **kwargs):
         super().__init__(**kwargs)
         self.device_object = device_object
+
+
+class CustomIconRightWidget(IconRightWidget):
+
+    def __init__(self, key, **kwargs):
+        super().__init__(**kwargs)
+        self.key = key
 
 
 class MainApp(MDApp):
@@ -32,7 +41,7 @@ class MainApp(MDApp):
     queue_timeout = StringProperty('1000')
     device_name = StringProperty('')
     result = StringProperty('534')
-    result_time = StringProperty('2023-03-01:19-33-54')
+    result_time = StringProperty('2023.03.02:19.33.54')
     metric = StringProperty('mm')
     L = StringProperty('234')
     H = StringProperty('123')
@@ -61,8 +70,6 @@ class MainApp(MDApp):
         self.ble.bind(on_characteristic_changed=self.on_characteristic_changed)
 
     def build(self):
-        if not self.store.exists('results'):
-            self.store.put('results')
         self.kv1 =  Builder.load_file('kv1.kv')
         self.kv2 =  Builder.load_file('kv2.kv')
         self.kv3 =  Builder.load_file('kv3.kv')
@@ -71,6 +78,25 @@ class MainApp(MDApp):
         self.sm.add_widget(self.kv1)
         self.sm.add_widget(self.kv2)
         self.sm.add_widget(self.kv3)
+
+        self.dialog = MDDialog(
+                text="Удалить историю измерений?",
+                buttons=[
+                    MDRectangleFlatButton(
+                        text="ДА",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                        on_press=self.clean_result_all,
+                        
+                    ),
+                    MDRectangleFlatButton(
+                        text="НЕТ",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                        on_press=self.close_dialog
+                    ),
+                ],
+            )
 
         self.manager_open = False
         self.file_manager = MDFileManager(
@@ -96,13 +122,17 @@ class MainApp(MDApp):
             self.result_calculation()
 
     def format_metric(self, value, metric):
-        if metric == 'mm':
-            return str(int(float(value)*1000))
-        else:
-            if '.' in value:
-                return value
+        try:
+            if metric == 'mm':
+                return str(int(float(value)*1000))
             else:
-                return str(int(value)/1000)
+                if '.' in value:
+                    return value
+                else:
+                    return str(int(value)/1000)
+        except Exception as e:
+            toast(f'Что-то пошло не так: {e}')
+            return ''
 
     def clean_l(self):
         self.L = ''
@@ -123,14 +153,28 @@ class MainApp(MDApp):
         self.result_time = ''
         toast('Очищено')
 
-    def clean_result_all(self):
+    def show_alert_dialog_del(self):
+        if self.result_list:
+            self.dialog.open()
+
+    def clean_result_all(self, *args):
+        self.store.clear()
+        self.clean_result_list()
+        self.dialog.dismiss()
         toast('История очищена')
+
+    def close_dialog(self, *args):
+        self.dialog.dismiss()
+
+    def clean_result_list(self):
+        for item in self.result_list:
+            self.kv3.ids.results.remove_widget(item)
 
     def append_result_list(self):
         if not self.result:
             toast('Прежде чем добавить результат в историю произведите вычисления')
         else:
-            self.store.put('results')
+            self.store.put(self.result_time, result_time=self.result_time, H=self.H,  L=self.L, result=self.result,  metric=self.metric)
             toast('Результат добавлен в историю')
 
     def start_scan_button(self):
@@ -140,7 +184,7 @@ class MainApp(MDApp):
     def start_scan(self, dt):
         if not self.state:
             self.init()
-        self.state = 'scan_start'
+        self.state = 'Поиск'
         # self.ble.close_gatt()
         # self.ble.start_scan()
 
@@ -154,7 +198,7 @@ class MainApp(MDApp):
         if not device.getAddress() in self.devices_address_list:
             self.list_devices(device)
 
-        if self.count < 20:
+        if self.count < 10:
             self.count += 1
             self.ble.close_gatt()
             self.ble.start_scan()
@@ -192,6 +236,25 @@ class MainApp(MDApp):
 
     def show_history(self):
         self.sm.current = 'history'
+        self.clean_result_list()
+        for key in self.store:
+            item = self.store.get(key)
+            w = OneLineAvatarIconListItem(
+                    CustomIconRightWidget(
+                        icon='delete-circle',
+                        theme_icon_color='Custom',
+                        icon_color=self.theme_cls.primary_color,
+                        on_press=self.clean_item_result,
+                        key=key,
+                        ),
+                    text=f"{item['result_time']} | {item['H']}{item['metric']} | {item['L']}{item['metric']} | {item['result']}{item['metric']}",
+            )
+            self.kv3.ids.results.add_widget(w)
+            self.result_list.append(w)
+
+    def clean_item_result(self, instanse):
+        self.store.delete(instanse.key)
+        self.show_history()
 
     def show_calculations(self):
         if not self.device_name:
@@ -235,7 +298,7 @@ class MainApp(MDApp):
 
             if self.H and self.L:
                 now = datetime.datetime.now()
-                self.result_time = now.strftime('%Y-%m-%d:%H-%M')
+                self.result_time = now.strftime('%Y.%m.%d:%H.%M.%S')
                 self.result_calculation()
                 
     def result_calculation(self):
@@ -264,9 +327,9 @@ class MainApp(MDApp):
         if not self.result_list:
             toast('Сначала выполните и сохраните вычисления')
         else:
-            self.file_manager.show('/storage/emulated/0/')  # output manager to the screen
-            self.manager_open = True
-            # self.file_manager.show_disks()
+            # self.file_manager.show('/storage/emulated/0/')  # output manager to the screen
+            # self.manager_open = True
+            self.file_manager.show_disks()
 
 
     def select_path(self, path: str):

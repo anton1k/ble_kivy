@@ -6,10 +6,10 @@ MDScreen:
         padding: "0dp"
         adaptive_height: True
         pos_hint: {"top": .9}
-        id: list
+        id: list_results
                 
         MDList:
-            id: container
+            id: results
 
     MDFloatingActionButton:
         icon: "content-save-all-outline"
@@ -21,7 +21,7 @@ MDScreen:
     MDFloatingActionButton:
         icon: "broom"
         pos_hint: {'top': .11, 'x': .03}
-        on_release: app.clean_result_all()
+        on_release: app.show_alert_dialog_del()
 
     MDNavigationLayout:
 
