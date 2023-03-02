@@ -7,3 +7,4 @@ recipes
 get-pip.py
 bin
 install-kivy-buildozer-dependencies.sh
+store.json

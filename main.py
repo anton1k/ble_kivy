@@ -1,18 +1,15 @@
 import datetime
-import os
 
 from kivy.clock import Clock, mainthread
 from kivy.config import Config
 from kivy.lang import Builder
-from kivy.properties import BooleanProperty, ObjectProperty, StringProperty
+from kivy.properties import BooleanProperty, StringProperty
+from kivy.storage.jsonstore import JsonStore
 from kivymd.app import MDApp
 from kivymd.toast import toast
-from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.button import MDTextButton
 from kivymd.uix.filemanager import MDFileManager
-from kivymd.uix.list import OneLineListItem, TwoLineListItem
+from kivymd.uix.list import TwoLineListItem
 from kivymd.uix.screenmanager import MDScreenManager
-from kivymd.uix.scrollview import MDScrollView
 
 from able import GATT_SUCCESS, BluetoothDispatcher
 
@@ -34,11 +31,12 @@ class MainApp(MDApp):
     queue_timeout_enabled = BooleanProperty(True)
     queue_timeout = StringProperty('1000')
     device_name = StringProperty('')
-    result = StringProperty('')
-    result_time = StringProperty('')
+    result = StringProperty('534')
+    result_time = StringProperty('2023-03-01:19-33-54')
     metric = StringProperty('mm')
-    L = StringProperty('')
-    H = StringProperty('')
+    L = StringProperty('234')
+    H = StringProperty('123')
+    store = JsonStore('store.json')
     devices_address_list = []
     result_list = []
     count = 0
@@ -63,6 +61,8 @@ class MainApp(MDApp):
         self.ble.bind(on_characteristic_changed=self.on_characteristic_changed)
 
     def build(self):
+        if not self.store.exists('results'):
+            self.store.put('results')
         self.kv1 =  Builder.load_file('kv1.kv')
         self.kv2 =  Builder.load_file('kv2.kv')
         self.kv3 =  Builder.load_file('kv3.kv')
@@ -130,6 +130,7 @@ class MainApp(MDApp):
         if not self.result:
             toast('Прежде чем добавить результат в историю произведите вычисления')
         else:
+            self.store.put('results')
             toast('Результат добавлен в историю')
 
     def start_scan_button(self):
