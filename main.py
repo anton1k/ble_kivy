@@ -11,8 +11,8 @@ from kivymd.toast import toast
 from kivymd.uix.button import MDRectangleFlatButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.filemanager import MDFileManager
-from kivymd.uix.list import (IconRightWidget, OneLineAvatarIconListItem,
-                             TwoLineListItem)
+from kivymd.uix.list import (IconLeftWidget, IconRightWidget,
+                             OneLineAvatarIconListItem, TwoLineListItem)
 from kivymd.uix.screenmanager import MDScreenManager
 
 from able import GATT_SUCCESS, BluetoothDispatcher
@@ -24,6 +24,7 @@ Config.set('kivy', 'log_enable', '1')
 class TwoLineListItemCustom(TwoLineListItem):
     '''Кастомный класс для списка найденых дейвайсов.
     '''
+
     def __init__(self, device_object, **kwargs):
         super().__init__(**kwargs)
         self.device_object = device_object
@@ -32,6 +33,7 @@ class TwoLineListItemCustom(TwoLineListItem):
 class CustomIconRightWidget(IconRightWidget):
     '''Кастомный класс для списка историй вычислений.
     '''
+
     def __init__(self, key, **kwargs):
         super().__init__(**kwargs)
         self.key = key
@@ -71,15 +73,16 @@ class MainApp(MDApp):
         self.ble.bind(on_device=self.on_device)
         self.ble.bind(on_scan_started=self.on_scan_started)
         self.ble.bind(on_scan_completed=self.on_scan_completed)
-        self.ble.bind(on_connection_state_change=self.on_connection_state_change)
+        self.ble.bind(
+            on_connection_state_change=self.on_connection_state_change)
         self.ble.bind(on_services=self.on_services)
         self.ble.bind(on_characteristic_changed=self.on_characteristic_changed)
 
     def build(self):
         # загружает фронтэнд
-        self.kv1 =  Builder.load_file('kv1.kv')
-        self.kv2 =  Builder.load_file('kv2.kv')
-        self.kv3 =  Builder.load_file('kv3.kv')
+        self.kv1 = Builder.load_file('kv1.kv')
+        self.kv2 = Builder.load_file('kv2.kv')
+        self.kv3 = Builder.load_file('kv3.kv')
 
         # менеджер экранов
         self.sm = MDScreenManager()
@@ -89,35 +92,35 @@ class MainApp(MDApp):
 
         # диалоговое окно в истории
         self.dialog = MDDialog(
-                text="Удалить историю измерений?",
-                buttons=[
-                    MDRectangleFlatButton(
-                        text="ДА",
-                        theme_text_color="Custom",
-                        text_color=self.theme_cls.primary_color,
-                        on_press=self.clean_result_all,
-                        
-                    ),
-                    MDRectangleFlatButton(
-                        text="НЕТ",
-                        theme_text_color="Custom",
-                        text_color=self.theme_cls.primary_color,
-                        on_press=self.close_dialog
-                    ),
-                ],
-            )
+            text="Удалить историю измерений?",
+            buttons=[
+                MDRectangleFlatButton(
+                    text="ДА",
+                    theme_text_color="Custom",
+                    text_color=self.theme_cls.primary_color,
+                    on_press=self.clean_result_all,
+
+                ),
+                MDRectangleFlatButton(
+                    text="НЕТ",
+                    theme_text_color="Custom",
+                    text_color=self.theme_cls.primary_color,
+                    on_press=self.close_dialog
+                ),
+            ],
+        )
 
         # файловый менеджер
         self.manager_open = False
         self.file_manager = MDFileManager(
-            exit_manager=self.exit_manager, 
+            exit_manager=self.exit_manager,
             select_path=self.select_path,
             selector='folder'
         )
 
-        Clock.schedule_once(self.start_scan, 1) # запускает поиск устройств
+        Clock.schedule_once(self.start_scan, 1)  # запускает поиск устройств
         return self.sm
-    
+
     def on_checkbox_active(self, checkbox, value):
         # меняет единцы измерения и пересчитывает результат
         if value:
@@ -126,8 +129,10 @@ class MainApp(MDApp):
         else:
             self.metric = 'mm'
             toast('Миллиметр')
-        if self.H: self.H = self.format_metric(self.H, self.metric)
-        if self.L: self.L = self.format_metric(self.L, self.metric)
+        if self.H:
+            self.H = self.format_metric(self.H, self.metric)
+        if self.L:
+            self.L = self.format_metric(self.L, self.metric)
 
         if self.H and self.L:
             self.result_calculation()
@@ -169,7 +174,7 @@ class MainApp(MDApp):
         toast('Очищено')
 
     def show_alert_dialog_del(self):
-        # открывает диологовое окно в истории при попытке оичистить историю 
+        # открывает диологовое окно в истории при попытке оичистить историю
         if self.result_list:
             self.dialog.open()
 
@@ -194,7 +199,8 @@ class MainApp(MDApp):
         if not self.result:
             toast('Прежде чем добавить результат в историю произведите вычисления')
         else:
-            self.store.put(self.result_time, result_time=self.result_time, H=self.H,  L=self.L, result=self.result,  metric=self.metric)
+            self.store.put(self.result_time, result_time=self.result_time,
+                           H=self.H,  L=self.L, result=self.result,  metric=self.metric)
             toast('Результат добавлен в историю')
 
     def start_scan_button(self):
@@ -213,12 +219,12 @@ class MainApp(MDApp):
     def on_scan_started(self, ble, success):
         # обновляет state когда запущено новое сканирование
         self.state = 'Поиск' if success else ''
- 
+
     def on_device(self, ble, device, rssi, advertisement):
         # вызывается когда находит устройство
         if self.state != 'Поиск':
             return
-        
+
         # добавляет новое устройство на экран если ранее не было добавлено
         if not device.getAddress() in self.devices_address_list:
             self.list_devices(device)
@@ -237,18 +243,18 @@ class MainApp(MDApp):
         devices_address = device.getAddress()
         devices_name = device.getName()
         self.kv1.ids.container.add_widget(
-                TwoLineListItemCustom(
-                    device_object=device,
-                    text=devices_name,
-                    secondary_text=devices_address,
-                    on_press=self.connect_device,
-                )
+            TwoLineListItemCustom(
+                device_object=device,
+                text=devices_name,
+                secondary_text=devices_address,
+                on_press=self.connect_device,
             )
+        )
         # добавляет новое устройствов список чтобы не было дублей
         self.devices_address_list.append(devices_address)
 
     def on_scan_completed(self, ble):
-        # по завершению поиска 
+        # по завершению поиска
         self.count = 0
 
     def connect_device(self, instance):
@@ -274,14 +280,15 @@ class MainApp(MDApp):
         for key in self.store:
             item = self.store.get(key)
             w = OneLineAvatarIconListItem(
-                    CustomIconRightWidget(
-                        icon='delete-circle',
-                        theme_icon_color='Custom',
-                        icon_color=self.theme_cls.primary_color,
-                        on_press=self.clean_item_result,
-                        key=key,
-                        ),
-                    text=f"{item['result_time']} | {item['H']}{item['metric']} | {item['L']}{item['metric']} | {item['result']}{item['metric']}",
+                IconLeftWidget(icon='circle-small'),
+                CustomIconRightWidget(
+                    icon='delete-circle',
+                    theme_icon_color='Custom',
+                    icon_color=self.theme_cls.primary_color,
+                    on_press=self.clean_item_result,
+                    key=key,
+                ),
+                text=f"{item['result_time']} | {item['H']}{item['metric']} | {item['L']}{item['metric']} | {item['result']}{item['metric']}",
             )
             self.kv3.ids.results.add_widget(w)
             # добавляет виджет в список чтобы избежать дублей
@@ -328,23 +335,26 @@ class MainApp(MDApp):
             self.ble.enable_notifications(characteristic, enable)
 
     def on_characteristic_changed(self, ble, characteristic):
-        # вызывается кода уведомление с устройства получено 
+        # вызывается кода уведомление с устройства получено
         uuid = characteristic.getUuid().toString()
         if self.uids['string'] in uuid:
             value = characteristic.getStringValue(0)
             if not self.H and not self.L:
-                self.H = self.format_metric(self.frormat_value(value), self.metric)
+                self.H = self.format_metric(
+                    self.frormat_value(value), self.metric)
             elif self.H and not self.L:
-                self.L = self.format_metric(self.frormat_value(value), self.metric)
+                self.L = self.format_metric(
+                    self.frormat_value(value), self.metric)
             elif not self.H and self.L:
-                self.H = self.format_metric(self.frormat_value(value), self.metric)
+                self.H = self.format_metric(
+                    self.frormat_value(value), self.metric)
 
             # если все данные полуцчены запускам вычесление радиуса
             if self.H and self.L:
                 now = datetime.datetime.now()
                 self.result_time = now.strftime('%Y.%m.%d:%H.%M.%S')
                 self.result_calculation()
-                
+
     def result_calculation(self):
         # вычесление радиуса в зависимости от еденицы измерения
         if self.metric == 'mm':
@@ -364,18 +374,18 @@ class MainApp(MDApp):
             return value.split('m')[0]
         else:
             return ''
-            
+
     def set_queue_settings(self):
         # устанавливает таймаут очереди
         self.ble.set_queue_timeout(None if not self.queue_timeout_enabled
                                    else int(self.queue_timeout) * .001)
-        
+
     def file_manager_open(self):
         # открывает файловый менеджер на странице истории
         if not self.result_list:
             toast('Сначала выполните и сохраните вычисления')
         else:
-            self.file_manager.show('/storage/emulated/0/')  # output manager to the screen
+            self.file_manager.show('/storage/emulated/0/')
             self.manager_open = True
             # self.file_manager.show_disks()
 
@@ -393,7 +403,7 @@ class MainApp(MDApp):
                 self.store[key]['H']+self.store[key]['metric'],
                 self.store[key]['L']+self.store[key]['metric'],
                 self.store[key]['result']+self.store[key]['metric'],
-                ])
+            ])
         path = f'{path}/results-{time_string}.xlsx'
 
         # записывает в таблицу
