@@ -30,7 +30,7 @@ class TwoLineListItemCustom(TwoLineListItem):
 
 
 class CustomIconRightWidget(IconRightWidget):
-    '''Кастомный класс для списка историй вычеслений.
+    '''Кастомный класс для списка историй вычислений.
     '''
     def __init__(self, key, **kwargs):
         super().__init__(**kwargs)
