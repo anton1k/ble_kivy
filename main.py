@@ -6,13 +6,14 @@ from kivy.config import Config
 from kivy.lang import Builder
 from kivy.properties import BooleanProperty, StringProperty
 from kivy.storage.jsonstore import JsonStore
+from kivy.utils import platform
 from kivymd.app import MDApp
 from kivymd.toast import toast
 from kivymd.uix.button import MDRectangleFlatButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.filemanager import MDFileManager
-from kivymd.uix.list import (IconLeftWidget, IconRightWidget,
-                             OneLineAvatarIconListItem, TwoLineListItem)
+from kivymd.uix.list import (IconRightWidget, OneLineRightIconListItem,
+                             TwoLineListItem)
 from kivymd.uix.screenmanager import MDScreenManager
 
 from able import GATT_SUCCESS, BluetoothDispatcher
@@ -279,8 +280,7 @@ class MainApp(MDApp):
         # добовлдяет виджеты резултатов из store
         for key in self.store:
             item = self.store.get(key)
-            w = OneLineAvatarIconListItem(
-                IconLeftWidget(icon='circle-small'),
+            w = OneLineRightIconListItem(
                 CustomIconRightWidget(
                     icon='delete-circle',
                     theme_icon_color='Custom',
@@ -385,9 +385,11 @@ class MainApp(MDApp):
         if not self.result_list:
             toast('Сначала выполните и сохраните вычисления')
         else:
-            self.file_manager.show('/storage/emulated/0/')
-            self.manager_open = True
-            # self.file_manager.show_disks()
+            if platform == "android":
+                self.file_manager.show('/storage/emulated/0/')
+                self.manager_open = True
+            else:
+                self.file_manager.show_disks()
 
     def select_path(self, path: str):
         # закрывает файловый менеджер прит получаении выбранного пути
@@ -412,6 +414,7 @@ class MainApp(MDApp):
 
             for row_num, data in enumerate(new_list):
                 worksheet.write_row(row_num, 0, data)
+
         toast(f'Сохранено в: {path}')
 
     def exit_manager(self, *args):
