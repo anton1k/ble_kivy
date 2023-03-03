@@ -18,6 +18,11 @@ from kivymd.uix.screenmanager import MDScreenManager
 
 from able import GATT_SUCCESS, BluetoothDispatcher
 
+if platform == "android":
+    from android import api_version, mActivity
+    from android.permissions import Permission, request_permissions
+    from jnius import autoclass, cast
+
 Config.set('kivy', 'log_level', 'debug')
 Config.set('kivy', 'log_enable', '1')
 
@@ -100,7 +105,6 @@ class MainApp(MDApp):
                     theme_text_color="Custom",
                     text_color=self.theme_cls.primary_color,
                     on_press=self.clean_result_all,
-
                 ),
                 MDRectangleFlatButton(
                     text="НЕТ",
@@ -243,16 +247,17 @@ class MainApp(MDApp):
         # добавляет новое устройство на экран
         devices_address = device.getAddress()
         devices_name = device.getName()
-        self.kv1.ids.container.add_widget(
-            TwoLineListItemCustom(
-                device_object=device,
-                text=devices_name,
-                secondary_text=devices_address,
-                on_press=self.connect_device,
+        if devices_name:
+            self.kv1.ids.container.add_widget(
+                TwoLineListItemCustom(
+                    device_object=device,
+                    text=devices_name,
+                    secondary_text=devices_address,
+                    on_press=self.connect_device,
+                )
             )
-        )
-        # добавляет новое устройствов список чтобы не было дублей
-        self.devices_address_list.append(devices_address)
+            # добавляет новое устройствов список чтобы не было дублей
+            self.devices_address_list.append(devices_address)
 
     def on_scan_completed(self, ble):
         # по завершению поиска
@@ -385,11 +390,15 @@ class MainApp(MDApp):
         if not self.result_list:
             toast('Сначала выполните и сохраните вычисления')
         else:
-            if platform == "android":
-                self.file_manager.show('/storage/emulated/0/')
-                self.manager_open = True
-            else:
-                self.file_manager.show_disks()
+            # if platform == "android":
+            #     from android.storage import primary_external_storage_path
+            #     p = primary_external_storage_path()
+            #     print(p,333333)
+            #     self.file_manager.show(p)
+            #     # self.file_manager.show('/storage/emulated/0/')
+            #     self.manager_open = True
+            # else:
+            self.file_manager.show_disks()
 
     def select_path(self, path: str):
         # закрывает файловый менеджер прит получаении выбранного пути
@@ -421,6 +430,76 @@ class MainApp(MDApp):
         # закрывает файловый менеджер
         self.manager_open = False
         self.file_manager.close()
+
+    def permissions_external_storage(self, *args):
+        if platform == "android":
+            PythonActivity = autoclass("org.kivy.android.PythonActivity")
+            Environment = autoclass("android.os.Environment")
+            Intent = autoclass("android.content.Intent")
+            Settings = autoclass("android.provider.Settings")
+            Uri = autoclass("android.net.Uri")
+            if api_version > 29:
+                # If you have access to the external storage, do whatever you need
+                if Environment.isExternalStorageManager():
+
+                    # If you don't have access, launch a new activity to show the user the system's dialog
+                    # to allow access to the external storage
+                    pass
+                else:
+                    try:
+                        activity = mActivity.getApplicationContext()
+                        uri = Uri.parse("package:" + activity.getPackageName())
+                        intent = Intent(
+                            Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri)
+                        currentActivity = cast(
+                            "android.app.Activity", PythonActivity.mActivity
+                        )
+                        currentActivity.startActivityForResult(intent, 101)
+                    except:
+                        intent = Intent()
+                        intent.setAction(
+                            Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                        currentActivity = cast(
+                            "android.app.Activity", PythonActivity.mActivity
+                        )
+                        currentActivity.startActivityForResult(intent, 101)
+                    self.show_permission_popup.dismiss()
+        self.file_manager_open()
+
+    def show_validation_dialog(self):
+        if platform == "android":
+            Environment = autoclass("android.os.Environment")
+            try:
+                if not Environment.isExternalStorageManager():
+                    self.show_permission_popup = MDDialog(
+                        text="Разрешить доступ к внутренней памяти и файлам вашего устройства...",
+                        size_hint=(0.6, 0.5),
+                        buttons=[
+                            MDRectangleFlatButton(
+                                text="ДА",
+                                theme_text_color="Custom",
+                                text_color=self.theme_cls.primary_color,
+                                on_press=self.permissions_external_storage
+                            ),
+                            MDRectangleFlatButton(
+                                text="НЕТ",
+                                theme_text_color="Custom",
+                                text_color=self.theme_cls.primary_color,
+                                on_release=self._close_validation_dialog,
+                            ),
+                        ],
+                    )
+                    self.show_permission_popup.open()
+                else:
+                    self.file_manager_open()
+            except:
+                request_permissions([Permission.WRITE_EXTERNAL_STORAGE,
+                                    Permission.READ_EXTERNAL_STORAGE])
+                self.file_manager_open()
+
+    def _close_validation_dialog(self, widget):
+        """Close input fields validation dialog"""
+        self.show_permission_popup.dismiss()
 
 
 MainApp().run()
