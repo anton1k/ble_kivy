@@ -1,4 +1,5 @@
 import datetime
+import os
 
 import xlsxwriter
 from kivy.clock import Clock, mainthread
@@ -19,9 +20,10 @@ from kivymd.uix.screenmanager import MDScreenManager
 from able import GATT_SUCCESS, BluetoothDispatcher
 
 if platform == "android":
-    from android import api_version, mActivity
+    from android import api_version
     from android.permissions import Permission, request_permissions
-    from jnius import autoclass, cast
+    from android.storage import primary_external_storage_path
+    from androidstorage4kivy import SharedStorage
 
 Config.set('kivy', 'log_level', 'debug')
 Config.set('kivy', 'log_enable', '1')
@@ -390,20 +392,16 @@ class MainApp(MDApp):
         if not self.result_list:
             toast('Сначала выполните и сохраните вычисления')
         else:
-            # if platform == "android":
-            #     from android.storage import primary_external_storage_path
-            #     p = primary_external_storage_path()
-            #     print(p,333333)
-            #     self.file_manager.show(p)
-            #     # self.file_manager.show('/storage/emulated/0/')
-            #     self.manager_open = True
-            # else:
-            self.file_manager.show_disks()
+            storage_path = primary_external_storage_path()
+            self.file_manager.show(storage_path)
+            self.manager_open = True
 
     def select_path(self, path: str):
         # закрывает файловый менеджер прит получаении выбранного пути
         self.exit_manager()
+        self.save_file_excel(path)
 
+    def save_file_excel(self, path=None):
         # создает список для записи резултатов в таблицу
         new_list = [['Дата/время', 'Хорда L', 'Высота сегмента h', 'Радиус'],]
         now = datetime.datetime.now()
@@ -415,91 +413,44 @@ class MainApp(MDApp):
                 self.store[key]['L']+self.store[key]['metric'],
                 self.store[key]['result']+self.store[key]['metric'],
             ])
-        path = f'{path}/results-{time_string}.xlsx'
+
+        # получаем пути в заисисмоости передан ли путь сохранения
+        if path:
+            path_from = path_save = f'{path}/results-{time_string}.xlsx'
+        else:
+            name_file = f'results-{time_string}.xlsx'
+            path_from = os.path.join(os.getcwd(), name_file)
+            path_save = f'/Documents/Radius DT20/{name_file}'
 
         # записывает в таблицу
-        with xlsxwriter.Workbook(path) as workbook:
+        with xlsxwriter.Workbook(path_from) as workbook:
             worksheet = workbook.add_worksheet()
 
             for row_num, data in enumerate(new_list):
                 worksheet.write_row(row_num, 0, data)
 
-        toast(f'Сохранено в: {path}')
+        # если не передан путь сохранения то сохраняем в папку Documents
+        # сделанно из-за ограничений прав на запись в Storage
+        # перемещает файл из папки с приложением в папку Documents
+        if not path:
+            ss = SharedStorage()
+            ss.copy_to_shared(path_from, collection='.xlsx',
+                              filepath=name_file)
+
+        toast(f'Сохранено в: {path_save}')
 
     def exit_manager(self, *args):
         # закрывает файловый менеджер
         self.manager_open = False
         self.file_manager.close()
 
-    def permissions_external_storage(self, *args):
-        if platform == "android":
-            PythonActivity = autoclass("org.kivy.android.PythonActivity")
-            Environment = autoclass("android.os.Environment")
-            Intent = autoclass("android.content.Intent")
-            Settings = autoclass("android.provider.Settings")
-            Uri = autoclass("android.net.Uri")
-            if api_version > 29:
-                # If you have access to the external storage, do whatever you need
-                if Environment.isExternalStorageManager():
-
-                    # If you don't have access, launch a new activity to show the user the system's dialog
-                    # to allow access to the external storage
-                    pass
-                else:
-                    try:
-                        activity = mActivity.getApplicationContext()
-                        uri = Uri.parse("package:" + activity.getPackageName())
-                        intent = Intent(
-                            Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri)
-                        currentActivity = cast(
-                            "android.app.Activity", PythonActivity.mActivity
-                        )
-                        currentActivity.startActivityForResult(intent, 101)
-                    except:
-                        intent = Intent()
-                        intent.setAction(
-                            Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                        currentActivity = cast(
-                            "android.app.Activity", PythonActivity.mActivity
-                        )
-                        currentActivity.startActivityForResult(intent, 101)
-                    self.show_permission_popup.dismiss()
-        self.file_manager_open()
-
     def show_validation_dialog(self):
-        if platform == "android":
-            Environment = autoclass("android.os.Environment")
-            try:
-                if not Environment.isExternalStorageManager():
-                    self.show_permission_popup = MDDialog(
-                        text="Разрешить доступ к внутренней памяти и файлам вашего устройства...",
-                        size_hint=(0.6, 0.5),
-                        buttons=[
-                            MDRectangleFlatButton(
-                                text="ДА",
-                                theme_text_color="Custom",
-                                text_color=self.theme_cls.primary_color,
-                                on_press=self.permissions_external_storage
-                            ),
-                            MDRectangleFlatButton(
-                                text="НЕТ",
-                                theme_text_color="Custom",
-                                text_color=self.theme_cls.primary_color,
-                                on_release=self._close_validation_dialog,
-                            ),
-                        ],
-                    )
-                    self.show_permission_popup.open()
-                else:
-                    self.file_manager_open()
-            except:
-                request_permissions([Permission.WRITE_EXTERNAL_STORAGE,
-                                    Permission.READ_EXTERNAL_STORAGE])
-                self.file_manager_open()
-
-    def _close_validation_dialog(self, widget):
-        """Close input fields validation dialog"""
-        self.show_permission_popup.dismiss()
-
+        if api_version > 29:
+            # если версия андройд 10 и выше, то сразу запускаем сохранение
+            self.save_file_excel()
+        else:
+            request_permissions([Permission.WRITE_EXTERNAL_STORAGE,
+                                 Permission.READ_EXTERNAL_STORAGE])
+            self.file_manager_open()
 
 MainApp().run()
